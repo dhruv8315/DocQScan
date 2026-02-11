@@ -2,6 +2,9 @@ import gradio as gr
 from PyPDF2 import PdfReader
 from typing_extensions import Concatenate
 
+def greet(name):
+    return f"Hello {name}!"
+
 def process_pdf(file_obj, text_input=""):
     
     file_path = file_obj.name  #Access the file path using file_obj
@@ -24,7 +27,8 @@ with gr.Blocks() as demo:
             
             file_input = gr.File(label="Upload a pdf file", file_types=[".pdf"]) # Create a file input component that allows users to upload PDF files, with a label "Upload a pdf file" and restricts the accepted file types to ".pdf".
             
-            text_input = gr.Textbox(show_label=False, placeholder="Ask Anything !") # Create a text input component with a label "Ask Anything !" and a placeholder text "Chat" to allow users to input their questions or messages.
+            text_input = gr.Textbox(show_label=False, 
+            placeholder="Ask Anything !") # Create a text input component with a label "Ask Anything !" and a placeholder text "Chat" to allow users to input their questions or messages.
             
             submit_btn = gr.Button("Submit") # Create a submit button with the label "Submit"
 
