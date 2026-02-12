@@ -1,24 +1,6 @@
 import gradio as gr
-from PyPDF2 import PdfReader
-from typing_extensions import Concatenate
+from backend.script import process_pdf
 
-
-def process_pdf(file_obj, text_input=""):
-    
-    file_path = file_obj.name  #Access the file path using file_obj
-    reader = PdfReader(file_path) # Use PdfReader to read the PDF file and store the content in a reader
-
-    raw_text = '' # Initialize an empty string to store the extracted text from the PDF
-
-    for i, pages in enumerate(reader.pages): # Loop through each page in the PDF and extract the text content
-        content = pages.extract_text()
-        if content: # Check if the content is not empty before appending it to the raw_text variable
-            raw_text += content
-
-
-"""
-This code defines a simple function `greet` that takes a name as input and returns a greeting message. The `gr.Interface` is used to create a web interface for this function, where users can input their name and receive the greeting. The `api_name` parameter allows the function to be accessed via an API endpoint named "predict". Finally, `demo.launch(share=True)` starts the interface and allows it to be shared publicly.
-"""
 with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
