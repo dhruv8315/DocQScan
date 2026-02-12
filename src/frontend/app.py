@@ -2,8 +2,6 @@ import gradio as gr
 from PyPDF2 import PdfReader
 from typing_extensions import Concatenate
 
-def greet(name):
-    return f"Hello {name}!"
 
 def process_pdf(file_obj, text_input=""):
     
