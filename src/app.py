@@ -1,18 +1,8 @@
 import gradio as gr
 from PyPDF2 import PdfReader
 from typing_extensions import Concatenate
+from backend.script import process_pdf
 
-def process_pdf(file_obj, text_input=""):
-    
-    file_path = file_obj.name  #Access the file path using file_obj
-    reader = PdfReader(file_path) # Use PdfReader to read the PDF file and store the content in a reader
-
-    raw_text = '' # Initialize an empty string to store the extracted text from the PDF
-
-    for i, pages in enumerate(reader.pages): # Loop through each page in the PDF and extract the text content
-        content = pages.extract_text()
-        if content: # Check if the content is not empty before appending it to the raw_text variable
-            raw_text += content
 
 
 """
