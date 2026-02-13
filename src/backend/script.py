@@ -35,7 +35,7 @@ def process_pdf(file_obj,query_text=""):
         if content: # Check if the content is not empty before appending it to the raw_text variable
             raw_text += content
     
-    text_splitter = CharacterTextSplitter(seperator =  "\n", chunk_size=800, chunk_overlap=200) # Initialize a CharacterTextSplitter with a chunk size of 1000 characters and an overlap of 200 characters between chunks
+    text_splitter = CharacterTextSplitter(separator =  "\n", chunk_size=800, chunk_overlap=200) # Initialize a CharacterTextSplitter with a chunk size of 1000 characters and an overlap of 200 characters between chunks
 
     texts = text_splitter.split_text(raw_text) # Use the text splitter to split the raw text into smaller chunks and store them in a list called texts
 
