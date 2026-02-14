@@ -41,10 +41,9 @@ def process_pdf(file_path, text_input=""):
     
     vector_store = AstraDBVectorStore(
     embedding=embeddings,
-    api_endpoint="https://4b9d8e60-d188-4473-91eb-2090c74d8f62-us-east1.apps.astra.datastax.com",
+    api_endpoint="endpoint",
     collection_name="document_qa",
-    token="AstraCS:jnnfqbitrpcIJAkYiQDKrEXo:92a2215a9f986619d90db4dda89c4e3c4f5f6bd8aecedf4a2a2043f5548b7d05",
-    namespace="default_keyspace",
+    token="token",
     )
     
     vector_store.add_documents(documents=all_splits)
