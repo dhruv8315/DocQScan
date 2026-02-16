@@ -16,6 +16,8 @@ import os
 
 # Token
 HF_TOKEN = os.getenv("HF_TOKEN") # Retrieve the Hugging Face token from the environment
+ASTRA_END_POINT = os.getenv("ASTRA_END_POINT") # Retrieve the AstraDB endpoint from the environment
+ASTRA_TOKEN = os.getenv("ASTRA_TOKEN") # Retrieve the AstraDB token from the environment
 
 def process_pdf(file_path, text_input=""):
 
@@ -41,9 +43,9 @@ def process_pdf(file_path, text_input=""):
     
     vector_store = AstraDBVectorStore(
     embedding=embeddings,
-    api_endpoint="endpoint",
+    api_endpoint=ASTRA_END_POINT,
     collection_name="document_qa",
-    token="token",
+    token=ASTRA_TOKEN,
     )
     
     vector_store.add_documents(documents=all_splits)
