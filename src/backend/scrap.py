@@ -1,96 +1,39 @@
-# Start of import statements
-
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEndpoint
-from langchain_huggingface.embeddings import HuggingFaceEndpointEmbeddings
-from langchain_astradb import AstraDBVectorStore
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-from langchain_classic.chains import create_retrieval_chain
-from langchain_community.vectorstores import AstraDB
-
 import os
-
-# End of import statements
-
 # Token
 HF_TOKEN = os.getenv("HF_TOKEN") # Retrieve the Hugging Face token from the environment
 ASTRA_END_POINT = os.getenv("ASTRA_END_POINT") # Retrieve the AstraDB endpoint from the environment
 ASTRA_TOKEN = os.getenv("ASTRA_TOKEN") # Retrieve the AstraDB token from the environment
 
-def process_pdf(file_path, text_input=""):
+def load_split_and_create_vectorstore(file_path):
+    
+    from langchain_community.document_loaders import PyPDFLoader
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
 
     loader = PyPDFLoader(file_path) 
-    
     docs = loader.load() 
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000, 
+        chunk_overlap=20,
+        add_start_index=True
+        ) 
+    documents = text_splitter.split_documents(docs)
 
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=20,add_start_index=True) 
-
-    all_splits = text_splitter.split_documents(docs) 
-    
-   
-   
-   
+    from langchain_astradb import AstraDBVectorStore
+    from langchain_huggingface.embeddings import HuggingFaceEndpointEmbeddings
+    import os
 
 
     model_embed = "sentence-transformers/all-MiniLM-L6-v2"
-    
-    embeddings = HuggingFaceEndpointEmbeddings(model=model_embed, huggingfacehub_api_token=HF_TOKEN) 
-    
-    query_result = embeddings.embed_documents([doc.page_content for doc in all_splits]) 
-    
-    
-    vector_store = AstraDBVectorStore(
-    embedding=embeddings,
-    api_endpoint=ASTRA_END_POINT,
-    collection_name="document_qa",
-    token=ASTRA_TOKEN,
+    embeddings = HuggingFaceEndpointEmbeddings(
+        model=model_embed, 
+        huggingfacehub_api_token=HF_TOKEN
+        ) 
+
+    vectorstore = AstraDBVectorStore.from_documents(
+        documents=documents,
+        embedding=embeddings,
+        api_endpoint=ASTRA_END_POINT,
+        collection_name="document_qa_collection",
+        token=ASTRA_TOKEN,
     )
-    
-    vector_store.add_documents(documents=all_splits)
-
-    print("Documents added to AstraDB vector store successfully.") 
-
-    """
-    db = AstraDB.from_documents(
-    documents=all_splits,
-    embedding=embeddings,
-    collection_name="document_qa"
-    )"""
-    
-    
-    
-    #results = vector_store.similarity_search(text_input)
-    """
-    #print(f"Similarity search results: {results[0].page_content}") # Print the results of the similarity search to the console for debugging purposes.
-    """
-    
-
-    
-   
-   
-   
-   
-   
-    model_llm = "facebook/rag-token-base" 
-    
-    llm = HuggingFaceEndpoint(repo_id=model_llm, temperature=0.5, huggingfacehub_api_token=HF_TOKEN) 
-
-    prompt = ChatPromptTemplate.from_template(
-        """Answer the following question based only on the provided context. Think step by step before providing a detailed answer. I will tip you $1000 if the user finds the answer helpful. 
-        <context>
-        {context}
-        </context>
-        Question: {input}"""
-        )   
-
-    document_chain = create_stuff_documents_chain(llm, prompt) 
-
-    retrieval = vector_store.as_retriever() 
-
-    retrieval_chain = create_retrieval_chain(retrieval,document_chain)
-
-    results = retrieval_chain.invoke({"input": text_input}) 
-    
-    return results["answer"]
+    return vectorstore
