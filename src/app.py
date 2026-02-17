@@ -2,7 +2,9 @@ import gradio as gr
 from PyPDF2 import PdfReader
 from typing_extensions import Concatenate
 from backend.script import process_pdf
+from backend.bot_conversation import conversation
 
+qa = conversation()
 
 
 """
