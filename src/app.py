@@ -1,35 +1,47 @@
 import gradio as gr
-from backend.script import build_qa_system, answer_question
+from backend.conversation import conversation
+
+qa = conversation()
+
+
+def add_text(history, text):
+    history = history + [(text, None)]
+    return history, ""
+
+def bot(history):
+    res = qa(
+        {
+            "question": history[-1][0],
+            "chat_history": history[:-1]
+        }
+
+    )
+    history[-1][1] = res
+    return history
 
 with gr.Blocks() as demo:
 
-    qa_state = gr.State() # Create a state variable to store the state of the application, which can be used to manage and share data across different components and functions within the Gradio interface.
+    chatbot = gr.Chatbot([],elem_id="chatbot",show_label=False).style(height=750)
+
     with gr.Row():
-        with gr.Column():
-            
-            file_input = gr.File(label="Upload a pdf file", file_types=[".pdf"]) # Create a file input component that allows users to upload PDF files, with a label "Upload a pdf file" and restricts the accepted file types to ".pdf".
-            
-            text_input = gr.Textbox(
+        with gr.Column(scale=0.80):
+            text = gr.Textbox(
                 show_label=False, 
                 placeholder="Ask Anything !"
-                ) # Create a text input component with a label "Ask Anything !" and a placeholder text "Chat" to allow users to input their questions or messages.
+                ).style(container=False)
+        
+        with gr.Column(scale=0.10):
+            submit_btn = gr.Button("Submit",variant="primary")
+
+        with gr.Column(scale=0.10):
+            clear_btn = gr.Button("Clear",variant="stop")
             
-            submit_btn = gr.Button("Submit") # Create a submit button with the label "Submit"
+    text.submit(add_text, [chatbot, text], chatbot).then(bot, chatbot, chatbot)
 
-    with gr.Row():
-        output = gr.Textbox(label="Result") # Create a textbox component to display the output result, with a label "Result"
-    
-    file_input.upload(
-        fn=build_qa_system, 
-        inputs=file_input, 
-        outputs=qa_state
-        ) # Set up an event listener for the file input component that triggers the `process_pdf` function when a file is uploaded. The function takes the uploaded file and the text input as arguments and outputs the result to the output textbox."""
+    submit_btn.click(add_text, [chatbot, text], chatbot).then(bot, chatbot, chatbot)
 
-    
-    submit_btn.click(
-        fn=answer_question, 
-        inputs=[qa_state, text_input], 
-        outputs=output
-        ) # Set up an event listener for the submit button that triggers the `process_pdf` function when the button is clicked. The function takes the uploaded file and the text input as arguments and outputs the result to the output textbox.
+    clear_btn.click(lambda: None, None, chatbot, queue=False)
 
-demo.launch()
+if __name__ == '__main__':
+    demo.queue(concurrency_count=3)
+    demo.launch()
