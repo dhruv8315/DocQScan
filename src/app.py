@@ -1,31 +1,48 @@
 import gradio as gr
-from PyPDF2 import PdfReader
-from typing_extensions import Concatenate
-from backend.script import process_pdf
 from backend.bot_conversation import conversation
 
 qa = conversation()
 
 
-"""
-This code defines a simple function `greet` that takes a name as input and returns a greeting message. The `gr.Interface` is used to create a web interface for this function, where users can input their name and receive the greeting. The `api_name` parameter allows the function to be accessed via an API endpoint named "predict". Finally, `demo.launch(share=True)` starts the interface and allows it to be shared publicly.
-"""
+def add_text(history, text):
+    history = history + [(text, None)]
+    return history, ""
+
+def bot(history):
+    res = qa(
+        {
+            "question": history[-1][0],
+            "chat_history": history[:-1]
+        }
+
+    )
+    history[-1][1] = res
+    return history
+
 with gr.Blocks() as demo:
-    with gr.Row():
-        with gr.Column():
-            
-            file_input = gr.File(label="Upload a pdf file", file_types=[".pdf"]) # Create a file input component that allows users to upload PDF files, with a label "Upload a pdf file" and restricts the accepted file types to ".pdf".
-            
-            text_input = gr.Textbox(show_label=False, placeholder="Ask Anything !") # Create a text input component with a label "Ask Anything !" and a placeholder text "Chat" to allow users to input their questions or messages.
-            
-            submit_btn = gr.Button("Submit") # Create a submit button with the label "Submit"
+
+    chatbot = gr.Chatbot([],elem_id="chatbot",show_label=False,height=750)
 
     with gr.Row():
-        output = gr.Textbox(label="Result") # Create a textbox component to display the output result, with a label "Result"
-    
-    """file_input.upload(fn=process_pdf, inputs=[file_input, text_input], outputs=output) # Set up an event listener for the file input component that triggers the `process_pdf` function when a file is uploaded. The function takes the uploaded file and the text input as arguments and outputs the result to the output textbox."""
+        with gr.Column(scale=0.80):
+            text = gr.Textbox(
+                show_label=False, 
+                placeholder="Ask Anything !",
+                container=False
+                )
+        
+        with gr.Column(scale=0.10):
+            submit_btn = gr.Button("Submit",variant="primary")
 
-    
-    submit_btn.click(fn=process_pdf, inputs=[file_input, text_input], outputs=output) # Set up an event listener for the submit button that triggers the `process_pdf` function when the button is clicked. The function takes the uploaded file and the text input as arguments and outputs the result to the output textbox.
+        with gr.Column(scale=0.10):
+            clear_btn = gr.Button("Clear",variant="stop")
+            
+    text.submit(add_text, [chatbot, text], chatbot).then(bot, chatbot, chatbot)
 
-demo.launch()
+    submit_btn.click(add_text, [chatbot, text], chatbot).then(bot, chatbot, chatbot)
+
+    clear_btn.click(lambda: None, None, chatbot, queue=False)
+
+if __name__ == '__main__':
+    demo.queue(default_concurrency_limit=3)
+    demo.launch()

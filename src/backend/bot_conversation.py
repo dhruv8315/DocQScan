@@ -43,20 +43,20 @@ def conversation():
     qa_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", "Answer the question based only on the provided context."),
-            MessagesPlaceholder(variable_name="chat_history"),
+            MessagesPlaceholder(variable_name="context"),
             ("human", "{input}")
         ]
     )
 
     history_aware_retriever = create_history_aware_retriever(
-        retriever, 
-        contextualize_q_prompt, 
-        llm
+        retriever=retriever, 
+        prompt=contextualize_q_prompt, 
+        llm=llm
         )
     
     question_answering_chain = create_stuff_documents_chain(
-        llm, 
-        qa_prompt
+        prompt=qa_prompt,
+        llm=llm
         )
     
     rag_chain = create_retrieval_chain(
