@@ -2,12 +2,8 @@
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEndpoint
 from langchain_huggingface.embeddings import HuggingFaceEndpointEmbeddings
 from langchain_astradb import AstraDBVectorStore
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-from langchain_classic.chains.retrieval import create_retrieval_chain
 import os
 
 # End of import statements
@@ -52,8 +48,9 @@ def process_pdf(file_path):
     token=ASTRA_TOKEN
     )
     
+    print("Documents embedded and stored in AstraDB successfully.") 
    
-    model_llm = "mistralai/Mistral-7B-Instruct-v0.3" 
+    """model_llm = "mistralai/Mistral-7B-Instruct-v0.3" 
     
     llm = HuggingFaceEndpoint( 
         repo_id=model_llm, 
@@ -62,15 +59,16 @@ def process_pdf(file_path):
         max_new_tokens=512
         ) 
 
-    prompt = ChatPromptTemplate.from_template(
-        """Answer the following question based only on the provided context. Think step by step before providing a detailed answer. You are a helpful assistant that only uses provided context. 
+    """    
+    #prompt = ChatPromptTemplate.from_template(
+    """Answer the following question based only on the provided context. Think step by step before providing a detailed answer. You are a helpful assistant that only uses provided context. 
         <context>
         {context}
         </context>
         Question: {input}"""
-        )   
-
-    document_chain = create_stuff_documents_chain(llm, prompt) 
+    #)   
+    """
+ document_chain = create_stuff_documents_chain(llm, prompt) 
 
     retrieval = vector_store.as_retriever() 
 
@@ -78,4 +76,4 @@ def process_pdf(file_path):
 
     results = retrieval_chain.invoke({"input": "Name of candidate?"}) 
     
-    return results["answer"]
+    return results["answer"]"""

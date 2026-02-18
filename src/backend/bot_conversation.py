@@ -6,6 +6,7 @@ from langchain_huggingface import HuggingFaceEndpoint
 from langchain_classic.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_classic.chains import create_retrieval_chain, create_history_aware_retriever
+from langchain_core.messages import HumanMessage, AIMessage
 
 load_dotenv()
 def conversation():
@@ -23,7 +24,11 @@ def conversation():
         token=os.getenv("ASTRA_TOKEN"),
     )
 
+    print("Vector store connection established successfully with AstraDB.")
+
     retriever = vectorestore.as_retriever(search_kwargs={"k": 3})
+
+    print("Retriever created successfully from the vector store.")
 
     model_llm = "mistralai/Mistral-7B-Instruct-v0.3"
     llm = HuggingFaceEndpoint(
@@ -40,6 +45,8 @@ def conversation():
         ]
     )
 
+    print("Contextualization prompt for history created successfully.")
+
     qa_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", "Answer the question based only on the provided context."),
@@ -48,19 +55,53 @@ def conversation():
         ]
     )
 
+    print("Question-answering prompt created successfully.")
+
     history_aware_retriever = create_history_aware_retriever(
         retriever=retriever, 
         prompt=contextualize_q_prompt, 
         llm=llm
         )
     
+    print("History-aware retriever created successfully.")
+
     question_answering_chain = create_stuff_documents_chain(
         prompt=qa_prompt,
         llm=llm
         )
     
+    print("Question-answering chain created successfully.")
+
     rag_chain = create_retrieval_chain(
         history_aware_retriever, 
         question_answering_chain
         )
+    
+    print("RAG chain created successfully.")
+
+    """def convert_gradio_to_langchain(history):
+        lc_history = []
+        for msg in history:
+            if msg["role"] == "user":
+                lc_history.append(HumanMessage(content=msg["content"]))
+            elif msg["role"] == "assistant":
+                lc_history.append(AIMessage(content=msg["content"]))
+        return lc_history
+    
+    
+    def chat(user_message, history):
+        lc_history = convert_gradio_to_langchain(history)
+        
+        response = rag_chain.invoke({
+            "input": user_message,
+            "chat_history": lc_history
+            })
+        
+        history.append({"role": "user", "content": user_message})
+        history.append({"role": "assistant", "content": response["answer"]})
+
+        return response["answer"]"""
+    
+    print("Conversation setup completed successfully. Ready to handle user queries.")
+    
     return rag_chain
