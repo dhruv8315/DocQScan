@@ -17,7 +17,7 @@ HF_TOKEN = os.getenv("HF_TOKEN") # Retrieve the Hugging Face token from the envi
 ASTRA_END_POINT = os.getenv("ASTRA_END_POINT") # Retrieve the AstraDB endpoint from the environment
 ASTRA_TOKEN = os.getenv("ASTRA_TOKEN") # Retrieve the AstraDB token from the environment
 
-def process_pdf(file_path, text_input=""):
+def process_pdf(file_path):
 
     print("Loading PDF document...")
 
@@ -76,6 +76,6 @@ def process_pdf(file_path, text_input=""):
 
     retrieval_chain = create_retrieval_chain(retrieval,document_chain)
 
-    results = retrieval_chain.invoke({"input": text_input}) 
+    results = retrieval_chain.invoke({"input": "Name of candidate?"}) 
     
     return results["answer"]
