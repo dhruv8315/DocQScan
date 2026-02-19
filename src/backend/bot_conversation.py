@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from langchain_astradb import AstraDBVectorStore
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_huggingface.embeddings import HuggingFaceEndpointEmbeddings
 from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
 from langchain_classic.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -10,13 +11,18 @@ from langchain_classic.chains import create_retrieval_chain, create_history_awar
 load_dotenv()
 def conversation():
 
-    model_embed = "sentence-transformers/all-MiniLM-L6-v2"
+    """model_embed = "sentence-transformers/all-MiniLM-L6-v2"
     embeddings = HuggingFaceEndpointEmbeddings(
         model=model_embed, 
         huggingfacehub_api_token=os.getenv("HF_TOKEN")
-        ) 
+        ) """
 
-    vectorestore = AstraDBVectorStore(
+    embeddings = OpenAIEmbeddings(
+        model="text-embedding-3-small", 
+        openai_api_key=os.getenv("OPENAI_API")
+        )
+    
+    vectorstore = AstraDBVectorStore(
         embedding=embeddings,
         api_endpoint=os.getenv("ASTRA_END_POINT"),
         collection_name="document_qa_collection",
@@ -25,20 +31,24 @@ def conversation():
 
     print("Vector store connection established successfully with AstraDB.")
 
-    retriever = vectorestore.as_retriever(search_kwargs={"k": 3})
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
     print("Retriever created successfully from the vector store.")
 
-    model_llm = "HuggingFaceH4/zephyr-7b-beta"
+    """ model_llm = "HuggingFaceH4/zephyr-7b-beta"
     llm = HuggingFaceEndpoint(
         repo_id=model_llm,
         task="conversational", 
         temperature=0, 
         huggingfacehub_api_token=os.getenv("HF_TOKEN")
-        )
+        )"""
     
+    llm = ChatOpenAI(
+        model="gpt-4o-mini", 
+        temperature=0.3, 
+        openai_api_key=os.getenv("OPENAI_API")
+        )
 
-    llm_chat = ChatHuggingFace(llm=llm)
     
     contextualize_q_prompt = ChatPromptTemplate.from_messages(
         [
@@ -69,7 +79,7 @@ def conversation():
 
     question_answering_chain = create_stuff_documents_chain(
         prompt=qa_prompt,
-        llm=llm_chat
+        llm=llm
         )
     
     print("Question-answering chain created successfully.")

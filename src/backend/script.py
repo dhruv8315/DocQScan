@@ -3,6 +3,7 @@
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface.embeddings import HuggingFaceEndpointEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_astradb import AstraDBVectorStore
 import os
 
@@ -36,15 +37,22 @@ def process_pdf(file_path):
 
     
     
-    model_embed = "sentence-transformers/all-MiniLM-L6-v2"
+    """model_embed = "sentence-transformers/all-MiniLM-L6-v2"
     
-    embeddings = HuggingFaceEndpointEmbeddings(model=model_embed, huggingfacehub_api_token=HF_TOKEN) 
+    embeddings = HuggingFaceEndpointEmbeddings(model=model_embed, huggingfacehub_api_token=HF_TOKEN) """
+
+    embeddings = OpenAIEmbeddings(
+        model="text-embedding-3-small", 
+        openai_api_key=os.getenv("OPENAI_API")
+        )
+    test_vector = embeddings.embed_query("hello world")
+    print(len(test_vector))
     
     vector_store = AstraDBVectorStore.from_documents(
     documents=all_splits,
     embedding=embeddings,
     api_endpoint=ASTRA_END_POINT,
-    collection_name="document_qa",
+    collection_name="document_qa_collection",
     token=ASTRA_TOKEN
     )
     
