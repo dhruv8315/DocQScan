@@ -27,11 +27,26 @@ def convert_gradio_history(history):
     return lc_history
 
 def bot(history):
-    user_msg = history[-1]["content"]
+    """user_msg = history[-1]["content"]
 
+    lc_history = convert_gradio_history(history[:-1])"""
+
+    raw_content = history[-1]["content"]
+
+    if isinstance(raw_content, list):
+        user_msg = raw_content[0]["text"]
+    else:
+        user_msg = raw_content
+    
     lc_history = convert_gradio_history(history[:-1])
     
     qa = conversation()
+    
+    print("TYPE user_msg:", type(user_msg))
+    print("VALUE user_msg:", user_msg)
+
+    print("TYPE lc_history:", type(lc_history))
+    print("TYPE first history element:", type(lc_history[0]) if lc_history else None)
 
     response = qa.invoke({
         "input": user_msg,

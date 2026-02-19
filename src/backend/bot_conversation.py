@@ -2,11 +2,10 @@ import os
 from dotenv import load_dotenv
 from langchain_astradb import AstraDBVectorStore
 from langchain_huggingface.embeddings import HuggingFaceEndpointEmbeddings
-from langchain_huggingface import HuggingFaceEndpoint
+from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
 from langchain_classic.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_classic.chains import create_retrieval_chain, create_history_aware_retriever
-from langchain_core.messages import HumanMessage, AIMessage
 
 load_dotenv()
 def conversation():
@@ -30,12 +29,16 @@ def conversation():
 
     print("Retriever created successfully from the vector store.")
 
-    model_llm = "mistralai/Mistral-7B-Instruct-v0.3"
+    model_llm = "HuggingFaceH4/zephyr-7b-beta"
     llm = HuggingFaceEndpoint(
-        repo_id=model_llm, 
+        repo_id=model_llm,
+        task="conversational", 
         temperature=0, 
         huggingfacehub_api_token=os.getenv("HF_TOKEN")
         )
+    
+
+    llm_chat = ChatHuggingFace(llm=llm)
     
     contextualize_q_prompt = ChatPromptTemplate.from_messages(
         [
@@ -49,8 +52,7 @@ def conversation():
 
     qa_prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", "Answer the question based only on the provided context."),
-            MessagesPlaceholder(variable_name="context"),
+            ("system", "Answer the question based only on the provided context.\n\nContext:\n{context}"),
             ("human", "{input}")
         ]
     )
@@ -67,7 +69,7 @@ def conversation():
 
     question_answering_chain = create_stuff_documents_chain(
         prompt=qa_prompt,
-        llm=llm
+        llm=llm_chat
         )
     
     print("Question-answering chain created successfully.")
