@@ -11,12 +11,6 @@ from langchain_classic.chains import create_retrieval_chain, create_history_awar
 load_dotenv()
 def conversation():
 
-    """model_embed = "sentence-transformers/all-MiniLM-L6-v2"
-    embeddings = HuggingFaceEndpointEmbeddings(
-        model=model_embed, 
-        huggingfacehub_api_token=os.getenv("HF_TOKEN")
-        ) """
-
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-small", 
         openai_api_key=os.getenv("OPENAI_API")
@@ -27,7 +21,7 @@ def conversation():
         api_endpoint=os.getenv("ASTRA_END_POINT"),
         collection_name="document_qa_collection",
         token=os.getenv("ASTRA_TOKEN"),
-    )
+    )                                                               # Intialize connection to AstraDB vector store using OpenAI embeddings
 
     print("Vector store connection established successfully with AstraDB.")
 
@@ -35,28 +29,20 @@ def conversation():
 
     print("Retriever created successfully from the vector store.")
 
-    """ model_llm = "HuggingFaceH4/zephyr-7b-beta"
-    llm = HuggingFaceEndpoint(
-        repo_id=model_llm,
-        task="conversational", 
-        temperature=0, 
-        huggingfacehub_api_token=os.getenv("HF_TOKEN")
-        )"""
     
     llm = ChatOpenAI(
         model="gpt-4o-mini", 
         temperature=0.3, 
         openai_api_key=os.getenv("OPENAI_API")
-        )
+    )                                                               # Initialize the language model (LLM) using OpenAI's GPT-4o-mini with specified temperature and API key
 
-    
     contextualize_q_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", "Given chat history and a latest question, rephrase the question to be standalone."),
             MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{input}")
         ]
-    )
+    )                                                               # Create a prompt template for contextualizing the user's question based on the chat history    
 
     print("Contextualization prompt for history created successfully.")
 
@@ -65,7 +51,7 @@ def conversation():
             ("system", "Answer the question based only on the provided context.\n\nContext:\n{context}"),
             ("human", "{input}")
         ]
-    )
+    )                                                               # Create a prompt template for question-answering based on retrieved context
 
     print("Question-answering prompt created successfully.")
 
@@ -73,47 +59,23 @@ def conversation():
         retriever=retriever, 
         prompt=contextualize_q_prompt, 
         llm=llm
-        )
+    )                                                               # Create a history-aware retriever that uses the retriever and contextualization prompt to reformulate user questions based on chat history
     
     print("History-aware retriever created successfully.")
 
     question_answering_chain = create_stuff_documents_chain(
         prompt=qa_prompt,
         llm=llm
-        )
+    )                                                              # Create a question-answering chain that uses the question-answering prompt and the language model to generate answers based on retrieved context
     
     print("Question-answering chain created successfully.")
 
     rag_chain = create_retrieval_chain(
         history_aware_retriever, 
         question_answering_chain
-        )
+    )                                                              # Create a retrieval-augmented generation (RAG) chain that combines the history-aware retriever and the question-answering chain to handle user queries in a conversational manner
     
-    print("RAG chain created successfully.")
-
-    """def convert_gradio_to_langchain(history):
-        lc_history = []
-        for msg in history:
-            if msg["role"] == "user":
-                lc_history.append(HumanMessage(content=msg["content"]))
-            elif msg["role"] == "assistant":
-                lc_history.append(AIMessage(content=msg["content"]))
-        return lc_history
-    
-    
-    def chat(user_message, history):
-        lc_history = convert_gradio_to_langchain(history)
-        
-        response = rag_chain.invoke({
-            "input": user_message,
-            "chat_history": lc_history
-            })
-        
-        history.append({"role": "user", "content": user_message})
-        history.append({"role": "assistant", "content": response["answer"]})
-
-        return response["answer"]"""
-    
+    print("RAG chain created successfully.")    
     print("Conversation setup completed successfully. Ready to handle user queries.")
     
     return rag_chain

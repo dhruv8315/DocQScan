@@ -4,16 +4,24 @@ from backend.bot_conversation import conversation
 from backend.script import process_pdf
 
 qa = None
+document_ready = False
 def upload_pdf(file):
-    global qa
-    qa = None
+    global qa,document_ready
+
+    print("Processing uploaded PDF...")
     process_pdf(file)
+
+    qa = None
+    document_ready = True
+
+    print("Document ingestion completed successfully.")
 
 def add_text(history, text):
     if history is None:
         history = []
     history = history + [{"role": "user", "content": text}]
     return history, ""
+
 
 def convert_gradio_history(history):
     lc_history = []
@@ -25,8 +33,18 @@ def convert_gradio_history(history):
     return lc_history
 
 def bot(history):
-    global qa
+    global qa,document_ready
 
+    if not document_ready:
+        history.append(
+            {
+                "role": "assistant", 
+                "content": "Please upload a PDF before asking questions."
+            }
+        )
+        return history
+
+    #Lazy initialization of the conversation chain to ensure it's created only after the document is processed
     if qa is None:
         print("Initializing the conversation chain...")
         qa = conversation()
