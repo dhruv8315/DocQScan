@@ -2,12 +2,10 @@ import os
 from dotenv import load_dotenv
 from langchain_astradb import AstraDBVectorStore
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_huggingface.embeddings import HuggingFaceEndpointEmbeddings
-from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
-from langchain_classic.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_classic.chains import create_retrieval_chain, create_history_aware_retriever
-
+    
 load_dotenv()
 def conversation():
 
