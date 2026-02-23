@@ -3,48 +3,44 @@ from langchain_core.messages import HumanMessage, AIMessage
 from backend.bot_conversation import conversation
 from backend.script import process_pdf
 
-
+qa = None
 def upload_pdf(file):
+    global qa
+    qa = None
     process_pdf(file)
 
 def add_text(history, text):
     if history is None:
         history = []
-
     history = history + [{"role": "user", "content": text}]
     return history, ""
 
 def convert_gradio_history(history):
-    
     lc_history = []
-
     for msg in history:
         if msg["role"] == "user":
             lc_history.append(HumanMessage(content=msg["content"]))
         elif msg["role"] == "assistant":
             lc_history.append(AIMessage(content=msg["content"]))
-    
     return lc_history
 
 def bot(history):
-    """user_msg = history[-1]["content"]
+    global qa
 
-    lc_history = convert_gradio_history(history[:-1])"""
+    if qa is None:
+        print("Initializing the conversation chain...")
+        qa = conversation()
 
     raw_content = history[-1]["content"]
-
     if isinstance(raw_content, list):
         user_msg = raw_content[0]["text"]
     else:
         user_msg = raw_content
-    
+
     lc_history = convert_gradio_history(history[:-1])
-    
-    qa = conversation()
-    
+   
     print("TYPE user_msg:", type(user_msg))
     print("VALUE user_msg:", user_msg)
-
     print("TYPE lc_history:", type(lc_history))
     print("TYPE first history element:", type(lc_history[0]) if lc_history else None)
 
@@ -52,22 +48,15 @@ def bot(history):
         "input": user_msg,
         "chat_history": lc_history
     })
-    
-
-    history[-1] = {"role": "assistant", "content": response["answer"]}
-
-    return history
-"""def bot(history):
-    res = qa(
+    history.append(
         {
-            "question": history[-1][0],
-            "chat_history": history[:-1]
+            "role": "assistant", 
+            "content": response["answer"]
         }
-
     )
-    history[-1][1] = res
     return history
-"""
+
+
 with gr.Blocks() as demo:
 
     with gr.Row(scale=3):
