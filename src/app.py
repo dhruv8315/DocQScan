@@ -13,6 +13,7 @@ qa = None
 document_ready = False
 current_document_source = None
 
+#upload_pdf function is responsible for handling the PDF file uploaded by the user, processing it, and preparing it for question-answering.
 def upload_pdf(file):
     global qa,document_ready,current_document_source
 
@@ -40,13 +41,14 @@ def upload_pdf(file):
 
         return gr.Warning("Failed to process the PDF. Please try again with a another PDF file.")
 
+#add_text function is responsible for adding the user's input text to the chat history and preparing it for processing by the bot.
 def add_text(history, text):
     if history is None:
         history = []
     history = history + [{"role": "user", "content": text}]
     return history, ""
 
-
+#convert_gradio_history function converts the chat history from Gradio's format to a format compatible with LangChain's message structure, allowing the conversation chain to process the history effectively.
 def convert_gradio_history(history):
     lc_history = []
     for msg in history:
@@ -56,6 +58,7 @@ def convert_gradio_history(history):
             lc_history.append(AIMessage(content=msg["content"]))
     return lc_history
 
+#bot function is responsible for handling the user's queries, invoking the conversation chain to generate responses based on the processed PDF document, and updating the chat history accordingly.
 def bot(history):
     global qa,document_ready,current_document_source
 
@@ -110,6 +113,7 @@ def bot(history):
         return history
 
 
+# Gradio UI Setup
 with gr.Blocks() as demo:
 
     with gr.Row(scale=3):
