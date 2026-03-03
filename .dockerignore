@@ -3,7 +3,8 @@ __pycache__/
 *.pyo
 *.pyd
 src/.env
-.venv
+src/.venv
+src/.gradio
 .git
 .gitignore
-logs/
+*.log
