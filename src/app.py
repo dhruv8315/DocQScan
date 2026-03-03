@@ -5,7 +5,10 @@ import gradio as gr
 from langchain_core.messages import HumanMessage, AIMessage
 from backend.bot_conversation import conversation
 from backend.script import process_pdf
+import sys
+import os
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger()
     
 # Global Variables
@@ -146,5 +149,6 @@ with gr.Blocks() as demo:
     clear_btn.click(lambda: [], None, chatbot, queue=False)
 
 if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 7860))
     demo.queue(default_concurrency_limit=3)
-    demo.launch(share=True, server_name="0.0.0.0", server_port=7860)
+    demo.launch(share=True, server_name="0.0.0.0", server_port=port)
