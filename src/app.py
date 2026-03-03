@@ -1,28 +1,57 @@
+import traceback
+import logging
+from backend.logger_config import setup_logger
 import gradio as gr
 from langchain_core.messages import HumanMessage, AIMessage
 from backend.bot_conversation import conversation
 from backend.script import process_pdf
+import sys
+import os
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+logger = setup_logger()
+    
+# Global Variables
 qa = None
 document_ready = False
+current_document_source = None
+
+#upload_pdf function is responsible for handling the PDF file uploaded by the user, processing it, and preparing it for question-answering.
 def upload_pdf(file):
-    global qa,document_ready
+    global qa,document_ready,current_document_source
 
-    print("Processing uploaded PDF...")
-    process_pdf(file)
+    try:
+        logger.info("Processing uploaded PDF...")
+        
+        if file is None:
+            logger.warning("No file uploaded.")
+            return gr.Warning("Please upload a PDF file to proceed.")
+        
+        current_document_source = process_pdf(file)
+        logger.info("DEBUG: Stored source in app.py → %s", current_document_source)
+        
+        qa = None
+        document_ready = True
 
-    qa = None
-    document_ready = True
+        logger.info("Document ingestion completed successfully.")
+        
+    except Exception as e:
+        logger.error("PDF UPLOAD ERROR:", exc_info=True)
 
-    print("Document ingestion completed successfully.")
+        document_ready = False
+        qa = None
+        current_document_source = None
 
+        return gr.Warning("Failed to process the PDF. Please try again with a another PDF file.")
+
+#add_text function is responsible for adding the user's input text to the chat history and preparing it for processing by the bot.
 def add_text(history, text):
     if history is None:
         history = []
     history = history + [{"role": "user", "content": text}]
     return history, ""
 
-
+#convert_gradio_history function converts the chat history from Gradio's format to a format compatible with LangChain's message structure, allowing the conversation chain to process the history effectively.
 def convert_gradio_history(history):
     lc_history = []
     for msg in history:
@@ -32,49 +61,62 @@ def convert_gradio_history(history):
             lc_history.append(AIMessage(content=msg["content"]))
     return lc_history
 
+#bot function is responsible for handling the user's queries, invoking the conversation chain to generate responses based on the processed PDF document, and updating the chat history accordingly.
 def bot(history):
-    global qa,document_ready
+    global qa,document_ready,current_document_source
 
-    if not document_ready:
+    try:
+        if not document_ready:
+            logger.warning("User asked question before uploading document.")
+            history.append(
+                {
+                    "role": "assistant", 
+                    "content": "Please upload a PDF before asking questions."
+                }
+            )
+            return history
+
+        #Lazy initialization of the conversation chain to ensure it's created only after the document is processed
+        if qa is None:
+            logger.info("Initializing the conversation chain...")
+            logger.info("Passing source to conversation → %s", current_document_source)
+            qa = conversation(current_document_source)
+
+        raw_content = history[-1]["content"]
+        if isinstance(raw_content, list):
+            user_msg = raw_content[0]["text"]
+        else:
+            user_msg = raw_content
+
+        logger.info(f"User query → %s", user_msg)
+
+        lc_history = convert_gradio_history(history[:-1])
+
+        response = qa.invoke({
+            "input": user_msg,
+            "chat_history": lc_history
+        })
         history.append(
             {
                 "role": "assistant", 
-                "content": "Please upload a PDF before asking questions."
+                "content": response["answer"]
+            }
+        )
+        return history
+    
+    except Exception as e:
+        logger.error("BOT ERROR:", exc_info=True)
+
+        history.append(
+            {
+                "role": "assistant", 
+                "content": "⚠️ Something went wrong while processing your question."
             }
         )
         return history
 
-    #Lazy initialization of the conversation chain to ensure it's created only after the document is processed
-    if qa is None:
-        print("Initializing the conversation chain...")
-        qa = conversation()
 
-    raw_content = history[-1]["content"]
-    if isinstance(raw_content, list):
-        user_msg = raw_content[0]["text"]
-    else:
-        user_msg = raw_content
-
-    lc_history = convert_gradio_history(history[:-1])
-   
-    print("TYPE user_msg:", type(user_msg))
-    print("VALUE user_msg:", user_msg)
-    print("TYPE lc_history:", type(lc_history))
-    print("TYPE first history element:", type(lc_history[0]) if lc_history else None)
-
-    response = qa.invoke({
-        "input": user_msg,
-        "chat_history": lc_history
-    })
-    history.append(
-        {
-            "role": "assistant", 
-            "content": response["answer"]
-        }
-    )
-    return history
-
-
+# Gradio UI Setup
 with gr.Blocks() as demo:
 
     with gr.Row(scale=3):
@@ -107,5 +149,6 @@ with gr.Blocks() as demo:
     clear_btn.click(lambda: [], None, chatbot, queue=False)
 
 if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 7860))
     demo.queue(default_concurrency_limit=3)
-    demo.launch()
+    demo.launch(share=True, server_name="0.0.0.0", server_port=port)
