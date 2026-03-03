@@ -13,7 +13,7 @@ COPY requirement.txt .
 
 # Install dependencies
 RUN pip install --upgrade pip
-RUN pip install -r requirement.txt
+RUN pip install --no-cache-dir --upgrade -r requirement.txt
 
 # Copy entire project
 COPY . .
