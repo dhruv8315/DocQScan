@@ -9,3 +9,5 @@ langchain-huggingface
 langchain-astradb
 python-dotenv
 pypdf
+ragas
+huggingface_hub
