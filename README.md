@@ -2,6 +2,7 @@
 
 An intelligent cloud-hosted application that enables contextual question answering over uploaded PDF documents using Retrieval-Augmented Generation (RAG). Built with Python and LangChain, and powered by AstraDB vector search and OpenAI models.
 
+Demo - https://huggingface.co/spaces/dhruv8315/Document-QA
 ---
 ## 📌 Features
 

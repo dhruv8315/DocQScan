@@ -56,6 +56,12 @@ cover/
 *.pot
 
 # Django stuff:
+# Created by venv; see https://docs.python.org/3/library/venv.html
+.venv/
+.env
+backend/__pycache__/
+*.pyc
+logs/
 *.log
 local_settings.py
 db.sqlite3
